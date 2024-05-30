@@ -1,0 +1,486 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script>function neighbourhoodHighlight(params) {
+  // console.log("in nieghbourhoodhighlight");
+  allNodes = nodes.get({ returnType: "Object" });
+  // originalNodes = JSON.parse(JSON.stringify(allNodes));
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    highlightActive = true;
+    var i, j;
+    var selectedNode = params.nodes[0];
+    var degrees = 2;
+
+    // mark all nodes as hard to read.
+    for (let nodeId in allNodes) {
+      // nodeColors[nodeId] = allNodes[nodeId].color;
+      allNodes[nodeId].color = "rgba(200,200,200,0.5)";
+      if (allNodes[nodeId].hiddenLabel === undefined) {
+        allNodes[nodeId].hiddenLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+    var connectedNodes = network.getConnectedNodes(selectedNode);
+    var allConnectedNodes = [];
+
+    // get the second degree nodes
+    for (i = 1; i < degrees; i++) {
+      for (j = 0; j < connectedNodes.length; j++) {
+        allConnectedNodes = allConnectedNodes.concat(
+          network.getConnectedNodes(connectedNodes[j])
+        );
+      }
+    }
+
+    // all second degree nodes get a different color and their label back
+    for (i = 0; i < allConnectedNodes.length; i++) {
+      // allNodes[allConnectedNodes[i]].color = "pink";
+      allNodes[allConnectedNodes[i]].color = "rgba(150,150,150,0.75)";
+      if (allNodes[allConnectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[allConnectedNodes[i]].label =
+          allNodes[allConnectedNodes[i]].hiddenLabel;
+        allNodes[allConnectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // all first degree nodes get their own color and their label back
+    for (i = 0; i < connectedNodes.length; i++) {
+      // allNodes[connectedNodes[i]].color = undefined;
+      allNodes[connectedNodes[i]].color = nodeColors[connectedNodes[i]];
+      if (allNodes[connectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[connectedNodes[i]].label =
+          allNodes[connectedNodes[i]].hiddenLabel;
+        allNodes[connectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // the main node gets its own color and its label back.
+    // allNodes[selectedNode].color = undefined;
+    allNodes[selectedNode].color = nodeColors[selectedNode];
+    if (allNodes[selectedNode].hiddenLabel !== undefined) {
+      allNodes[selectedNode].label = allNodes[selectedNode].hiddenLabel;
+      allNodes[selectedNode].hiddenLabel = undefined;
+    }
+  } else if (highlightActive === true) {
+    // console.log("highlightActive was true");
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      // allNodes[nodeId].color = "purple";
+      allNodes[nodeId].color = nodeColors[nodeId];
+      // delete allNodes[nodeId].color;
+      if (allNodes[nodeId].hiddenLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].hiddenLabel;
+        allNodes[nodeId].hiddenLabel = undefined;
+      }
+    }
+    highlightActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    // console.log("Nothing was selected");
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        // allNodes[nodeId].color = {};
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function filterHighlight(params) {
+  allNodes = nodes.get({ returnType: "Object" });
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    filterActive = true;
+    let selectedNodes = params.nodes;
+
+    // hiding all nodes and saving the label
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = true;
+      if (allNodes[nodeId].savedLabel === undefined) {
+        allNodes[nodeId].savedLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+
+    for (let i=0; i < selectedNodes.length; i++) {
+      allNodes[selectedNodes[i]].hidden = false;
+      if (allNodes[selectedNodes[i]].savedLabel !== undefined) {
+        allNodes[selectedNodes[i]].label = allNodes[selectedNodes[i]].savedLabel;
+        allNodes[selectedNodes[i]].savedLabel = undefined;
+      }
+    }
+
+  } else if (filterActive === true) {
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = false;
+      if (allNodes[nodeId].savedLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].savedLabel;
+        allNodes[nodeId].savedLabel = undefined;
+      }
+    }
+    filterActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function selectNode(nodes) {
+  network.selectNodes(nodes);
+  neighbourhoodHighlight({ nodes: nodes });
+  return nodes;
+}
+
+function selectNodes(nodes) {
+  network.selectNodes(nodes);
+  filterHighlight({nodes: nodes});
+  return nodes;
+}
+
+function highlightFilter(filter) {
+  let selectedNodes = []
+  let selectedProp = filter['property']
+  if (filter['item'] === 'node') {
+    let allNodes = nodes.get({ returnType: "Object" });
+    for (let nodeId in allNodes) {
+      if (allNodes[nodeId][selectedProp] && filter['value'].includes((allNodes[nodeId][selectedProp]).toString())) {
+        selectedNodes.push(nodeId)
+      }
+    }
+  }
+  else if (filter['item'] === 'edge'){
+    let allEdges = edges.get({returnType: 'object'});
+    // check if the selected property exists for selected edge and select the nodes connected to the edge
+    for (let edge in allEdges) {
+      if (allEdges[edge][selectedProp] && filter['value'].includes((allEdges[edge][selectedProp]).toString())) {
+        selectedNodes.push(allEdges[edge]['from'])
+        selectedNodes.push(allEdges[edge]['to'])
+      }
+    }
+  }
+  selectNodes(selectedNodes)
+}</script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+            
+            
+            
+            
+            
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.0.0-rc.4/css/tom-select.min.css" integrity="sha512-43fHB3GLgZfz8QXl1RPQ8O66oIgv3po9cJ5erMt1c4QISq9dYb195T3vr5ImnJPXuVroKcGBPXBFKETW8jrPNQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.0.0-rc.4/js/tom-select.complete.js" integrity="sha512-jeF9CfnvzDiw9G9xiksVjxR2lib44Gnovvkv+3CgCG6NXCD4gqlA5nDAVW5WjpA+i+/zKsUWV5xNEbW1X/HH0Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 900px;
+                 background-color: #ffffff;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+             #config {
+                 float: left;
+                 width: 400px;
+                 height: 600px;
+             }
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+                <div id="select-menu" class="card-header">
+                    <div class="row no-gutters">
+                        <div class="col-10 pb-2">
+                            <select
+                            class="form-select"
+                            aria-label="Default select example"
+                            onchange="selectNode([value]);"
+                            id="select-node"
+                            placeholder="Select node..."
+                            >
+                                <option selected>Select a Node by ID</option>
+                                
+                                    <option value="annual, quarterly, or monthly reports on environmental permit implementation should be submitted to the national environmental permit management information platform in accordance with the law">annual, quarterly, or monthly reports on environmental permit implementation should be submitted to the national environmental permit management information platform in accordance with the law</option>
+                                
+                                    <option value="environmental permit priority management">environmental permit priority management</option>
+                                
+                                    <option value="records related to environmental management">records related to environmental management</option>
+                                
+                                    <option value="temporary cessation of environmental permits according to law">temporary cessation of environmental permits according to law</option>
+                                
+                                    <option value="yearly, quarterly, and monthly reports on the implementation of environmental permits">yearly, quarterly, and monthly reports on the implementation of environmental permits</option>
+                                
+                                    <option value="communication of pollution monitoring automatic measurement devices with environmental management departments">communication of pollution monitoring automatic measurement devices with environmental management departments</option>
+                                
+                                    <option value="detailed records of actual pollution emissions and volumes in accordance with relevant technical standards">detailed records of actual pollution emissions and volumes in accordance with relevant technical standards</option>
+                                
+                                    <option value="details of major production facilities operating in accordance with environmental pollution control requirements">details of major production facilities operating in accordance with environmental pollution control requirements</option>
+                                
+                                    <option value="details of other information required by related technical standards for recording">details of other information required by related technical standards for recording</option>
+                                
+                                    <option value="details of pollution prevention facilities operating and managing information">details of pollution prevention facilities operating and managing information</option>
+                                
+                                    <option value="environmental permit implementation reports should be used as important references for post-project environmental impact assessment">environmental permit implementation reports should be used as important references for post-project environmental impact assessment</option>
+                                
+                                    <option value="environmental permits that should be canceled or revoked according to the law">environmental permits that should be canceled or revoked according to the law</option>
+                                
+                                    <option value="environmental permits that should be canceled or revoked due to changes in production and business activities">environmental permits that should be canceled or revoked due to changes in production and business activities</option>
+                                
+                                    <option value="environmental permits that should be canceled or revoked due to exceeding the limit or abnormalities in pollution prevention facilities">environmental permits that should be canceled or revoked due to exceeding the limit or abnormalities in pollution prevention facilities</option>
+                                
+                                    <option value="implementation of environmental permit priority management">implementation of environmental permit priority management</option>
+                                
+                                    <option value="pollution monitoring automatic measurement devices installed, operated, and maintained in accordance with the law">pollution monitoring automatic measurement devices installed, operated, and maintained in accordance with the law</option>
+                                
+                                    <option value="quarterly or monthly reports can replace annual reports in some cases and should include basic production information, pollution prevention facility operating status, self-monitoring execution status, records management status, disclosure situation, internal environmental management system construction and operation status, and other environmental permit requirements for execution">quarterly or monthly reports can replace annual reports in some cases and should include basic production information, pollution prevention facility operating status, self-monitoring execution status, records management status, disclosure situation, internal environmental management system construction and operation status, and other environmental permit requirements for execution</option>
+                                
+                                    <option value="reporting and rectifying abnormalities in pollution monitoring automatic measurement devices in a timely manner">reporting and rectifying abnormalities in pollution monitoring automatic measurement devices in a timely manner</option>
+                                
+                                    <option value="依法取得建设项目环境影响报告书（表）批准文件或者已经办理环境影响登记表备案手术">依法取得建设项目环境影响报告书（表）批准文件或者已经办理环境影响登记表备案手术</option>
+                                
+                                    <option value="第二十三条">第二十三条</option>
+                                
+                                    <option value="第二十二条">第二十二条</option>
+                                
+                                    <option value="具有法定代表人或主要负责人的基本信息">具有法定代表人或主要负责人的基本信息</option>
+                                
+                                    <option value="大气污染物、水污染物、工业固体废物、工业噪声等控制污染物排放的要求，重污染天气等特殊时段禁止或者限制污染物排放的要求，以及土壤污染重点监管单位的控制有毒有害物质排放、土壤污染隐患排查、自行监测等要求">大气污染物、水污染物、工业固体废物、工业噪声等控制污染物排放的要求，重污染天气等特殊时段禁止或者限制污染物排放的要求，以及土壤污染重点监管单位的控制有毒有害物质排放、土壤污染隐患排查、自行监测等要求</option>
+                                
+                                    <option value="排污单位">排污单位</option>
+                                
+                                    <option value="排污许可证">排污许可证</option>
+                                
+                                    <option value="实际排污行为变化之前重新申请取得排汽许可证">实际排污行为变化之前重新申请取得排汽许可证</option>
+                                
+                                    <option value="排污登记单位名称、统一社会信用代码、生产经营场所所在地、行业类别、法定代表人或者实际负责人等基本信息">排污登记单位名称、统一社会信用代码、生产经营场所所在地、行业类别、法定代表人或者实际负责人等基本信息</option>
+                                
+                                    <option value="排污登记表内容">排污登记表内容</option>
+                                
+                                    <option value="更加严格的排放限值">更加严格的排放限值</option>
+                                
+                                    <option value="排汽许可证有效期届满未延续">排汽许可证有效期届满未延续</option>
+                                
+                                    <option value="第二十九条">第二十九条</option>
+                                
+                                    <option value="排汽许可证记载内容发生变化，可以主动向审批部门提出调整排汽许可证内容的申请">排汽许可证记载内容发生变化，可以主动向审批部门提出调整排汽许可证内容的申请</option>
+                                
+                                    <option value="第二十八条">第二十八条</option>
+                                
+                                    <option value="提交变更排汽许可证申请表和与变更排汽许可证有关的其他材料">提交变更排汽许可证申请表和与变更排汽许可证有关的其他材料</option>
+                                
+                                    <option value="相关变更内容载入排汽许可证副本中的变更和延续记录">相关变更内容载入排汽许可证副本中的变更和延续记录</option>
+                                
+                                    <option value="第三十条">第三十条</option>
+                                
+                                    <option value="超越法定职权审批排汽许可证或违反法定程序审批排汽许可证">超越法定职权审批排汽许可证或违反法定程序审批排汽许可证</option>
+                                
+                                    <option value="第二十七条">第二十七条</option>
+                                
+                                    <option value="适用的污染物排放标准或重点污染物排放总量控制要求发生变化，需要对排汽许可证进行变更">适用的污染物排放标准或重点污染物排放总量控制要求发生变化，需要对排汽许可证进行变更</option>
+                                
+                                    <option value="自受理之日起三十日内，向审批部门提交变更排汽许可证申请表以及与变更排汽许可证有关的其他材料">自受理之日起三十日内，向审批部门提交变更排汽许可证申请表以及与变更排汽许可证有关的其他材料</option>
+                                
+                            </select>
+                        </div>
+                        <div class="col-2 pb-2">
+                            <button type="button" class="btn btn-primary btn-block" onclick="neighbourhoodHighlight({nodes: []});">Reset Selection</button>
+                        </div>
+                    </div>
+                </div>
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+            <div id="config"></div>
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+                  new TomSelect("#select-node",{
+                      create: false,
+                      sortField: {
+                          field: "text",
+                          direction: "asc"
+                      }
+                  });
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"group": 1, "id": "annual, quarterly, or monthly reports on environmental permit implementation should be submitted to the national environmental permit management information platform in accordance with the law", "label": "annual, quarterly, or monthly reports on environmental permit implementation should be submitted to the national environmental permit management information platform in accordance with the law", "shape": "dot", "size": 4}, {"group": 1, "id": "environmental permit priority management", "label": "environmental permit priority management", "shape": "dot", "size": 17}, {"group": 1, "id": "records related to environmental management", "label": "records related to environmental management", "shape": "dot", "size": 17}, {"group": 1, "id": "temporary cessation of environmental permits according to law", "label": "temporary cessation of environmental permits according to law", "shape": "dot", "size": 17}, {"group": 1, "id": "yearly, quarterly, and monthly reports on the implementation of environmental permits", "label": "yearly, quarterly, and monthly reports on the implementation of environmental permits", "shape": "dot", "size": 17}, {"group": 1, "id": "communication of pollution monitoring automatic measurement devices with environmental management departments", "label": "communication of pollution monitoring automatic measurement devices with environmental management departments", "shape": "dot", "size": 4}, {"group": 1, "id": "detailed records of actual pollution emissions and volumes in accordance with relevant technical standards", "label": "detailed records of actual pollution emissions and volumes in accordance with relevant technical standards", "shape": "dot", "size": 4}, {"group": 1, "id": "details of major production facilities operating in accordance with environmental pollution control requirements", "label": "details of major production facilities operating in accordance with environmental pollution control requirements", "shape": "dot", "size": 4}, {"group": 1, "id": "details of other information required by related technical standards for recording", "label": "details of other information required by related technical standards for recording", "shape": "dot", "size": 4}, {"group": 1, "id": "details of pollution prevention facilities operating and managing information", "label": "details of pollution prevention facilities operating and managing information", "shape": "dot", "size": 4}, {"group": 1, "id": "environmental permit implementation reports should be used as important references for post-project environmental impact assessment", "label": "environmental permit implementation reports should be used as important references for post-project environmental impact assessment", "shape": "dot", "size": 4}, {"group": 1, "id": "environmental permits that should be canceled or revoked according to the law", "label": "environmental permits that should be canceled or revoked according to the law", "shape": "dot", "size": 4}, {"group": 1, "id": "environmental permits that should be canceled or revoked due to changes in production and business activities", "label": "environmental permits that should be canceled or revoked due to changes in production and business activities", "shape": "dot", "size": 4}, {"group": 1, "id": "environmental permits that should be canceled or revoked due to exceeding the limit or abnormalities in pollution prevention facilities", "label": "environmental permits that should be canceled or revoked due to exceeding the limit or abnormalities in pollution prevention facilities", "shape": "dot", "size": 4}, {"group": 1, "id": "implementation of environmental permit priority management", "label": "implementation of environmental permit priority management", "shape": "dot", "size": 5}, {"group": 1, "id": "pollution monitoring automatic measurement devices installed, operated, and maintained in accordance with the law", "label": "pollution monitoring automatic measurement devices installed, operated, and maintained in accordance with the law", "shape": "dot", "size": 5}, {"group": 1, "id": "quarterly or monthly reports can replace annual reports in some cases and should include basic production information, pollution prevention facility operating status, self-monitoring execution status, records management status, disclosure situation, internal environmental management system construction and operation status, and other environmental permit requirements for execution", "label": "quarterly or monthly reports can replace annual reports in some cases and should include basic production information, pollution prevention facility operating status, self-monitoring execution status, records management status, disclosure situation, internal environmental management system construction and operation status, and other environmental permit requirements for execution", "shape": "dot", "size": 4}, {"group": 1, "id": "reporting and rectifying abnormalities in pollution monitoring automatic measurement devices in a timely manner", "label": "reporting and rectifying abnormalities in pollution monitoring automatic measurement devices in a timely manner", "shape": "dot", "size": 4}, {"group": 2, "id": "\u4f9d\u6cd5\u53d6\u5f97\u5efa\u8bbe\u9879\u76ee\u73af\u5883\u5f71\u54cd\u62a5\u544a\u4e66\uff08\u8868\uff09\u6279\u51c6\u6587\u4ef6\u6216\u8005\u5df2\u7ecf\u529e\u7406\u73af\u5883\u5f71\u54cd\u767b\u8bb0\u8868\u5907\u6848\u624b\u672f", "label": "\u4f9d\u6cd5\u53d6\u5f97\u5efa\u8bbe\u9879\u76ee\u73af\u5883\u5f71\u54cd\u62a5\u544a\u4e66\uff08\u8868\uff09\u6279\u51c6\u6587\u4ef6\u6216\u8005\u5df2\u7ecf\u529e\u7406\u73af\u5883\u5f71\u54cd\u767b\u8bb0\u8868\u5907\u6848\u624b\u672f", "shape": "dot", "size": 2}, {"group": 5, "id": "\u7b2c\u4e8c\u5341\u4e09\u6761", "label": "\u7b2c\u4e8c\u5341\u4e09\u6761", "shape": "dot", "size": 15}, {"group": 5, "id": "\u7b2c\u4e8c\u5341\u4e8c\u6761", "label": "\u7b2c\u4e8c\u5341\u4e8c\u6761", "shape": "dot", "size": 15}, {"group": 3, "id": "\u5177\u6709\u6cd5\u5b9a\u4ee3\u8868\u4eba\u6216\u4e3b\u8981\u8d1f\u8d23\u4eba\u7684\u57fa\u672c\u4fe1\u606f", "label": "\u5177\u6709\u6cd5\u5b9a\u4ee3\u8868\u4eba\u6216\u4e3b\u8981\u8d1f\u8d23\u4eba\u7684\u57fa\u672c\u4fe1\u606f", "shape": "dot", "size": 2}, {"group": 4, "id": "\u5927\u6c14\u6c61\u67d3\u7269\u3001\u6c34\u6c61\u67d3\u7269\u3001\u5de5\u4e1a\u56fa\u4f53\u5e9f\u7269\u3001\u5de5\u4e1a\u566a\u58f0\u7b49\u63a7\u5236\u6c61\u67d3\u7269\u6392\u653e\u7684\u8981\u6c42\uff0c\u91cd\u6c61\u67d3\u5929\u6c14\u7b49\u7279\u6b8a\u65f6\u6bb5\u7981\u6b62\u6216\u8005\u9650\u5236\u6c61\u67d3\u7269\u6392\u653e\u7684\u8981\u6c42\uff0c\u4ee5\u53ca\u571f\u58e4\u6c61\u67d3\u91cd\u70b9\u76d1\u7ba1\u5355\u4f4d\u7684\u63a7\u5236\u6709\u6bd2\u6709\u5bb3\u7269\u8d28\u6392\u653e\u3001\u571f\u58e4\u6c61\u67d3\u9690\u60a3\u6392\u67e5\u3001\u81ea\u884c\u76d1\u6d4b\u7b49\u8981\u6c42", "label": "\u5927\u6c14\u6c61\u67d3\u7269\u3001\u6c34\u6c61\u67d3\u7269\u3001\u5de5\u4e1a\u56fa\u4f53\u5e9f\u7269\u3001\u5de5\u4e1a\u566a\u58f0\u7b49\u63a7\u5236\u6c61\u67d3\u7269\u6392\u653e\u7684\u8981\u6c42\uff0c\u91cd\u6c61\u67d3\u5929\u6c14\u7b49\u7279\u6b8a\u65f6\u6bb5\u7981\u6b62\u6216\u8005\u9650\u5236\u6c61\u67d3\u7269\u6392\u653e\u7684\u8981\u6c42\uff0c\u4ee5\u53ca\u571f\u58e4\u6c61\u67d3\u91cd\u70b9\u76d1\u7ba1\u5355\u4f4d\u7684\u63a7\u5236\u6709\u6bd2\u6709\u5bb3\u7269\u8d28\u6392\u653e\u3001\u571f\u58e4\u6c61\u67d3\u9690\u60a3\u6392\u67e5\u3001\u81ea\u884c\u76d1\u6d4b\u7b49\u8981\u6c42", "shape": "dot", "size": 2}, {"group": 4, "id": "\u6392\u6c61\u5355\u4f4d", "label": "\u6392\u6c61\u5355\u4f4d", "shape": "dot", "size": 5}, {"group": 4, "id": "\u6392\u6c61\u8bb8\u53ef\u8bc1", "label": "\u6392\u6c61\u8bb8\u53ef\u8bc1", "shape": "dot", "size": 5}, {"group": 5, "id": "\u5b9e\u9645\u6392\u6c61\u884c\u4e3a\u53d8\u5316\u4e4b\u524d\u91cd\u65b0\u7533\u8bf7\u53d6\u5f97\u6392\u6c7d\u8bb8\u53ef\u8bc1", "label": "\u5b9e\u9645\u6392\u6c61\u884c\u4e3a\u53d8\u5316\u4e4b\u524d\u91cd\u65b0\u7533\u8bf7\u53d6\u5f97\u6392\u6c7d\u8bb8\u53ef\u8bc1", "shape": "dot", "size": 2}, {"group": 4, "id": "\u6392\u6c61\u767b\u8bb0\u5355\u4f4d\u540d\u79f0\u3001\u7edf\u4e00\u793e\u4f1a\u4fe1\u7528\u4ee3\u7801\u3001\u751f\u4ea7\u7ecf\u8425\u573a\u6240\u6240\u5728\u5730\u3001\u884c\u4e1a\u7c7b\u522b\u3001\u6cd5\u5b9a\u4ee3\u8868\u4eba\u6216\u8005\u5b9e\u9645\u8d1f\u8d23\u4eba\u7b49\u57fa\u672c\u4fe1\u606f", "label": "\u6392\u6c61\u767b\u8bb0\u5355\u4f4d\u540d\u79f0\u3001\u7edf\u4e00\u793e\u4f1a\u4fe1\u7528\u4ee3\u7801\u3001\u751f\u4ea7\u7ecf\u8425\u573a\u6240\u6240\u5728\u5730\u3001\u884c\u4e1a\u7c7b\u522b\u3001\u6cd5\u5b9a\u4ee3\u8868\u4eba\u6216\u8005\u5b9e\u9645\u8d1f\u8d23\u4eba\u7b49\u57fa\u672c\u4fe1\u606f", "shape": "dot", "size": 2}, {"group": 4, "id": "\u6392\u6c61\u767b\u8bb0\u8868\u5185\u5bb9", "label": "\u6392\u6c61\u767b\u8bb0\u8868\u5185\u5bb9", "shape": "dot", "size": 2}, {"group": 4, "id": "\u66f4\u52a0\u4e25\u683c\u7684\u6392\u653e\u9650\u503c", "label": "\u66f4\u52a0\u4e25\u683c\u7684\u6392\u653e\u9650\u503c", "shape": "dot", "size": 2}, {"group": 5, "id": "\u6392\u6c7d\u8bb8\u53ef\u8bc1\u6709\u6548\u671f\u5c4a\u6ee1\u672a\u5ef6\u7eed", "label": "\u6392\u6c7d\u8bb8\u53ef\u8bc1\u6709\u6548\u671f\u5c4a\u6ee1\u672a\u5ef6\u7eed", "shape": "dot", "size": 3}, {"group": 5, "id": "\u7b2c\u4e8c\u5341\u4e5d\u6761", "label": "\u7b2c\u4e8c\u5341\u4e5d\u6761", "shape": "dot", "size": 3}, {"group": 5, "id": "\u6392\u6c7d\u8bb8\u53ef\u8bc1\u8bb0\u8f7d\u5185\u5bb9\u53d1\u751f\u53d8\u5316\uff0c\u53ef\u4ee5\u4e3b\u52a8\u5411\u5ba1\u6279\u90e8\u95e8\u63d0\u51fa\u8c03\u6574\u6392\u6c7d\u8bb8\u53ef\u8bc1\u5185\u5bb9\u7684\u7533\u8bf7", "label": "\u6392\u6c7d\u8bb8\u53ef\u8bc1\u8bb0\u8f7d\u5185\u5bb9\u53d1\u751f\u53d8\u5316\uff0c\u53ef\u4ee5\u4e3b\u52a8\u5411\u5ba1\u6279\u90e8\u95e8\u63d0\u51fa\u8c03\u6574\u6392\u6c7d\u8bb8\u53ef\u8bc1\u5185\u5bb9\u7684\u7533\u8bf7", "shape": "dot", "size": 3}, {"group": 5, "id": "\u7b2c\u4e8c\u5341\u516b\u6761", "label": "\u7b2c\u4e8c\u5341\u516b\u6761", "shape": "dot", "size": 3}, {"group": 5, "id": "\u63d0\u4ea4\u53d8\u66f4\u6392\u6c7d\u8bb8\u53ef\u8bc1\u7533\u8bf7\u8868\u548c\u4e0e\u53d8\u66f4\u6392\u6c7d\u8bb8\u53ef\u8bc1\u6709\u5173\u7684\u5176\u4ed6\u6750\u6599", "label": "\u63d0\u4ea4\u53d8\u66f4\u6392\u6c7d\u8bb8\u53ef\u8bc1\u7533\u8bf7\u8868\u548c\u4e0e\u53d8\u66f4\u6392\u6c7d\u8bb8\u53ef\u8bc1\u6709\u5173\u7684\u5176\u4ed6\u6750\u6599", "shape": "dot", "size": 2}, {"group": 5, "id": "\u76f8\u5173\u53d8\u66f4\u5185\u5bb9\u8f7d\u5165\u6392\u6c7d\u8bb8\u53ef\u8bc1\u526f\u672c\u4e2d\u7684\u53d8\u66f4\u548c\u5ef6\u7eed\u8bb0\u5f55", "label": "\u76f8\u5173\u53d8\u66f4\u5185\u5bb9\u8f7d\u5165\u6392\u6c7d\u8bb8\u53ef\u8bc1\u526f\u672c\u4e2d\u7684\u53d8\u66f4\u548c\u5ef6\u7eed\u8bb0\u5f55", "shape": "dot", "size": 2}, {"group": 5, "id": "\u7b2c\u4e09\u5341\u6761", "label": "\u7b2c\u4e09\u5341\u6761", "shape": "dot", "size": 3}, {"group": 5, "id": "\u8d85\u8d8a\u6cd5\u5b9a\u804c\u6743\u5ba1\u6279\u6392\u6c7d\u8bb8\u53ef\u8bc1\u6216\u8fdd\u53cd\u6cd5\u5b9a\u7a0b\u5e8f\u5ba1\u6279\u6392\u6c7d\u8bb8\u53ef\u8bc1", "label": "\u8d85\u8d8a\u6cd5\u5b9a\u804c\u6743\u5ba1\u6279\u6392\u6c7d\u8bb8\u53ef\u8bc1\u6216\u8fdd\u53cd\u6cd5\u5b9a\u7a0b\u5e8f\u5ba1\u6279\u6392\u6c7d\u8bb8\u53ef\u8bc1", "shape": "dot", "size": 3}, {"group": 5, "id": "\u7b2c\u4e8c\u5341\u4e03\u6761", "label": "\u7b2c\u4e8c\u5341\u4e03\u6761", "shape": "dot", "size": 3}, {"group": 5, "id": "\u9002\u7528\u7684\u6c61\u67d3\u7269\u6392\u653e\u6807\u51c6\u6216\u91cd\u70b9\u6c61\u67d3\u7269\u6392\u653e\u603b\u91cf\u63a7\u5236\u8981\u6c42\u53d1\u751f\u53d8\u5316\uff0c\u9700\u8981\u5bf9\u6392\u6c7d\u8bb8\u53ef\u8bc1\u8fdb\u884c\u53d8\u66f4", "label": "\u9002\u7528\u7684\u6c61\u67d3\u7269\u6392\u653e\u6807\u51c6\u6216\u91cd\u70b9\u6c61\u67d3\u7269\u6392\u653e\u603b\u91cf\u63a7\u5236\u8981\u6c42\u53d1\u751f\u53d8\u5316\uff0c\u9700\u8981\u5bf9\u6392\u6c7d\u8bb8\u53ef\u8bc1\u8fdb\u884c\u53d8\u66f4", "shape": "dot", "size": 3}, {"group": 5, "id": "\u81ea\u53d7\u7406\u4e4b\u65e5\u8d77\u4e09\u5341\u65e5\u5185\uff0c\u5411\u5ba1\u6279\u90e8\u95e8\u63d0\u4ea4\u53d8\u66f4\u6392\u6c7d\u8bb8\u53ef\u8bc1\u7533\u8bf7\u8868\u4ee5\u53ca\u4e0e\u53d8\u66f4\u6392\u6c7d\u8bb8\u53ef\u8bc1\u6709\u5173\u7684\u5176\u4ed6\u6750\u6599", "label": "\u81ea\u53d7\u7406\u4e4b\u65e5\u8d77\u4e09\u5341\u65e5\u5185\uff0c\u5411\u5ba1\u6279\u90e8\u95e8\u63d0\u4ea4\u53d8\u66f4\u6392\u6c7d\u8bb8\u53ef\u8bc1\u7533\u8bf7\u8868\u4ee5\u53ca\u4e0e\u53d8\u66f4\u6392\u6c7d\u8bb8\u53ef\u8bc1\u6709\u5173\u7684\u5176\u4ed6\u6750\u6599", "shape": "dot", "size": 2}]);
+                  edges = new vis.DataSet([{"from": "annual, quarterly, or monthly reports on environmental permit implementation should be submitted to the national environmental permit management information platform in accordance with the law", "title": "contextual proximity", "to": "environmental permit priority management", "width": 0.5}, {"from": "annual, quarterly, or monthly reports on environmental permit implementation should be submitted to the national environmental permit management information platform in accordance with the law", "title": "contextual proximity", "to": "records related to environmental management", "width": 1.0}, {"from": "annual, quarterly, or monthly reports on environmental permit implementation should be submitted to the national environmental permit management information platform in accordance with the law", "title": "contextual proximity", "to": "temporary cessation of environmental permits according to law", "width": 0.75}, {"from": "annual, quarterly, or monthly reports on environmental permit implementation should be submitted to the national environmental permit management information platform in accordance with the law", "title": "Implementation of environmental permits,contextual proximity", "to": "yearly, quarterly, and monthly reports on the implementation of environmental permits", "width": 1.75}, {"from": "communication of pollution monitoring automatic measurement devices with environmental management departments", "title": "Communication with environmental management departments,contextual proximity", "to": "environmental permit priority management", "width": 1.5}, {"from": "communication of pollution monitoring automatic measurement devices with environmental management departments", "title": "contextual proximity", "to": "records related to environmental management", "width": 1.0}, {"from": "communication of pollution monitoring automatic measurement devices with environmental management departments", "title": "contextual proximity", "to": "temporary cessation of environmental permits according to law", "width": 0.75}, {"from": "communication of pollution monitoring automatic measurement devices with environmental management departments", "title": "contextual proximity", "to": "yearly, quarterly, and monthly reports on the implementation of environmental permits", "width": 0.75}, {"from": "detailed records of actual pollution emissions and volumes in accordance with relevant technical standards", "title": "contextual proximity", "to": "environmental permit priority management", "width": 0.5}, {"from": "detailed records of actual pollution emissions and volumes in accordance with relevant technical standards", "title": "Environmental management records,contextual proximity", "to": "records related to environmental management", "width": 2.0}, {"from": "detailed records of actual pollution emissions and volumes in accordance with relevant technical standards", "title": "contextual proximity", "to": "temporary cessation of environmental permits according to law", "width": 0.75}, {"from": "detailed records of actual pollution emissions and volumes in accordance with relevant technical standards", "title": "contextual proximity", "to": "yearly, quarterly, and monthly reports on the implementation of environmental permits", "width": 0.75}, {"from": "details of major production facilities operating in accordance with environmental pollution control requirements", "title": "contextual proximity", "to": "environmental permit priority management", "width": 0.5}, {"from": "details of major production facilities operating in accordance with environmental pollution control requirements", "title": "Environmental management records,contextual proximity", "to": "records related to environmental management", "width": 2.0}, {"from": "details of major production facilities operating in accordance with environmental pollution control requirements", "title": "contextual proximity", "to": "temporary cessation of environmental permits according to law", "width": 0.75}, {"from": "details of major production facilities operating in accordance with environmental pollution control requirements", "title": "contextual proximity", "to": "yearly, quarterly, and monthly reports on the implementation of environmental permits", "width": 0.75}, {"from": "details of other information required by related technical standards for recording", "title": "contextual proximity", "to": "environmental permit priority management", "width": 0.5}, {"from": "details of other information required by related technical standards for recording", "title": "Environmental management records,contextual proximity", "to": "records related to environmental management", "width": 2.0}, {"from": "details of other information required by related technical standards for recording", "title": "contextual proximity", "to": "temporary cessation of environmental permits according to law", "width": 0.75}, {"from": "details of other information required by related technical standards for recording", "title": "contextual proximity", "to": "yearly, quarterly, and monthly reports on the implementation of environmental permits", "width": 0.75}, {"from": "details of pollution prevention facilities operating and managing information", "title": "contextual proximity", "to": "environmental permit priority management", "width": 0.5}, {"from": "details of pollution prevention facilities operating and managing information", "title": "Environmental management records,contextual proximity", "to": "records related to environmental management", "width": 2.0}, {"from": "details of pollution prevention facilities operating and managing information", "title": "contextual proximity", "to": "temporary cessation of environmental permits according to law", "width": 0.75}, {"from": "details of pollution prevention facilities operating and managing information", "title": "contextual proximity", "to": "yearly, quarterly, and monthly reports on the implementation of environmental permits", "width": 0.75}, {"from": "environmental permit implementation reports should be used as important references for post-project environmental impact assessment", "title": "contextual proximity", "to": "environmental permit priority management", "width": 0.5}, {"from": "environmental permit implementation reports should be used as important references for post-project environmental impact assessment", "title": "contextual proximity", "to": "records related to environmental management", "width": 1.0}, {"from": "environmental permit implementation reports should be used as important references for post-project environmental impact assessment", "title": "contextual proximity", "to": "temporary cessation of environmental permits according to law", "width": 0.75}, {"from": "environmental permit implementation reports should be used as important references for post-project environmental impact assessment", "title": "Implementation of environmental permits,contextual proximity", "to": "yearly, quarterly, and monthly reports on the implementation of environmental permits", "width": 1.75}, {"from": "environmental permit priority management", "title": "contextual proximity", "to": "environmental permits that should be canceled or revoked according to the law", "width": 0.5}, {"from": "environmental permit priority management", "title": "contextual proximity", "to": "environmental permits that should be canceled or revoked due to changes in production and business activities", "width": 0.5}, {"from": "environmental permit priority management", "title": "contextual proximity", "to": "environmental permits that should be canceled or revoked due to exceeding the limit or abnormalities in pollution prevention facilities", "width": 0.5}, {"from": "environmental permit priority management", "title": "contextual proximity", "to": "implementation of environmental permit priority management", "width": 0.5}, {"from": "environmental permit priority management", "title": "contextual proximity", "to": "pollution monitoring automatic measurement devices installed, operated, and maintained in accordance with the law", "width": 0.5}, {"from": "environmental permit priority management", "title": "contextual proximity", "to": "quarterly or monthly reports can replace annual reports in some cases and should include basic production information, pollution prevention facility operating status, self-monitoring execution status, records management status, disclosure situation, internal environmental management system construction and operation status, and other environmental permit requirements for execution", "width": 0.5}, {"from": "environmental permit priority management", "title": "contextual proximity", "to": "records related to environmental management", "width": 2.0}, {"from": "environmental permit priority management", "title": "contextual proximity", "to": "reporting and rectifying abnormalities in pollution monitoring automatic measurement devices in a timely manner", "width": 0.5}, {"from": "environmental permit priority management", "title": "contextual proximity", "to": "temporary cessation of environmental permits according to law", "width": 1.5}, {"from": "environmental permit priority management", "title": "contextual proximity", "to": "yearly, quarterly, and monthly reports on the implementation of environmental permits", "width": 1.5}, {"from": "environmental permits that should be canceled or revoked according to the law", "title": "contextual proximity", "to": "records related to environmental management", "width": 1.0}, {"from": "environmental permits that should be canceled or revoked according to the law", "title": "Legal cancellation or revocation,contextual proximity", "to": "temporary cessation of environmental permits according to law", "width": 1.75}, {"from": "environmental permits that should be canceled or revoked according to the law", "title": "contextual proximity", "to": "yearly, quarterly, and monthly reports on the implementation of environmental permits", "width": 0.75}, {"from": "environmental permits that should be canceled or revoked due to changes in production and business activities", "title": "contextual proximity", "to": "records related to environmental management", "width": 1.0}, {"from": "environmental permits that should be canceled or revoked due to changes in production and business activities", "title": "Changes in production and business activities,contextual proximity", "to": "temporary cessation of environmental permits according to law", "width": 1.75}, {"from": "environmental permits that should be canceled or revoked due to changes in production and business activities", "title": "contextual proximity", "to": "yearly, quarterly, and monthly reports on the implementation of environmental permits", "width": 0.75}, {"from": "environmental permits that should be canceled or revoked due to exceeding the limit or abnormalities in pollution prevention facilities", "title": "contextual proximity", "to": "records related to environmental management", "width": 1.0}, {"from": "environmental permits that should be canceled or revoked due to exceeding the limit or abnormalities in pollution prevention facilities", "title": "Exceeding the limits or abnormalities in pollution prevention facilities,contextual proximity", "to": "temporary cessation of environmental permits according to law", "width": 1.75}, {"from": "environmental permits that should be canceled or revoked due to exceeding the limit or abnormalities in pollution prevention facilities", "title": "contextual proximity", "to": "yearly, quarterly, and monthly reports on the implementation of environmental permits", "width": 0.75}, {"from": "implementation of environmental permit priority management", "title": "Environmental permit priority management", "to": "pollution monitoring automatic measurement devices installed, operated, and maintained in accordance with the law", "width": 1.0}, {"from": "implementation of environmental permit priority management", "title": "contextual proximity", "to": "records related to environmental management", "width": 1.0}, {"from": "implementation of environmental permit priority management", "title": "contextual proximity", "to": "temporary cessation of environmental permits according to law", "width": 0.75}, {"from": "implementation of environmental permit priority management", "title": "contextual proximity", "to": "yearly, quarterly, and monthly reports on the implementation of environmental permits", "width": 0.75}, {"from": "pollution monitoring automatic measurement devices installed, operated, and maintained in accordance with the law", "title": "contextual proximity", "to": "records related to environmental management", "width": 1.0}, {"from": "pollution monitoring automatic measurement devices installed, operated, and maintained in accordance with the law", "title": "contextual proximity", "to": "temporary cessation of environmental permits according to law", "width": 0.75}, {"from": "pollution monitoring automatic measurement devices installed, operated, and maintained in accordance with the law", "title": "contextual proximity", "to": "yearly, quarterly, and monthly reports on the implementation of environmental permits", "width": 0.75}, {"from": "quarterly or monthly reports can replace annual reports in some cases and should include basic production information, pollution prevention facility operating status, self-monitoring execution status, records management status, disclosure situation, internal environmental management system construction and operation status, and other environmental permit requirements for execution", "title": "contextual proximity", "to": "records related to environmental management", "width": 1.0}, {"from": "quarterly or monthly reports can replace annual reports in some cases and should include basic production information, pollution prevention facility operating status, self-monitoring execution status, records management status, disclosure situation, internal environmental management system construction and operation status, and other environmental permit requirements for execution", "title": "contextual proximity", "to": "temporary cessation of environmental permits according to law", "width": 0.75}, {"from": "quarterly or monthly reports can replace annual reports in some cases and should include basic production information, pollution prevention facility operating status, self-monitoring execution status, records management status, disclosure situation, internal environmental management system construction and operation status, and other environmental permit requirements for execution", "title": "Implementation of environmental permits,contextual proximity", "to": "yearly, quarterly, and monthly reports on the implementation of environmental permits", "width": 1.75}, {"from": "records related to environmental management", "title": "contextual proximity", "to": "reporting and rectifying abnormalities in pollution monitoring automatic measurement devices in a timely manner", "width": 1.0}, {"from": "records related to environmental management", "title": "contextual proximity", "to": "temporary cessation of environmental permits according to law", "width": 3.0}, {"from": "records related to environmental management", "title": "contextual proximity", "to": "yearly, quarterly, and monthly reports on the implementation of environmental permits", "width": 3.0}, {"from": "reporting and rectifying abnormalities in pollution monitoring automatic measurement devices in a timely manner", "title": "contextual proximity", "to": "temporary cessation of environmental permits according to law", "width": 0.75}, {"from": "reporting and rectifying abnormalities in pollution monitoring automatic measurement devices in a timely manner", "title": "contextual proximity", "to": "yearly, quarterly, and monthly reports on the implementation of environmental permits", "width": 0.75}, {"from": "temporary cessation of environmental permits according to law", "title": "contextual proximity", "to": "yearly, quarterly, and monthly reports on the implementation of environmental permits", "width": 2.25}, {"from": "\u4f9d\u6cd5\u53d6\u5f97\u5efa\u8bbe\u9879\u76ee\u73af\u5883\u5f71\u54cd\u62a5\u544a\u4e66\uff08\u8868\uff09\u6279\u51c6\u6587\u4ef6\u6216\u8005\u5df2\u7ecf\u529e\u7406\u73af\u5883\u5f71\u54cd\u767b\u8bb0\u8868\u5907\u6848\u624b\u672f", "title": "contextual proximity", "to": "\u7b2c\u4e8c\u5341\u4e09\u6761", "width": 1.0}, {"from": "\u4f9d\u6cd5\u53d6\u5f97\u5efa\u8bbe\u9879\u76ee\u73af\u5883\u5f71\u54cd\u62a5\u544a\u4e66\uff08\u8868\uff09\u6279\u51c6\u6587\u4ef6\u6216\u8005\u5df2\u7ecf\u529e\u7406\u73af\u5883\u5f71\u54cd\u767b\u8bb0\u8868\u5907\u6848\u624b\u672f", "title": "\u662f,contextual proximity", "to": "\u7b2c\u4e8c\u5341\u4e8c\u6761", "width": 1.5}, {"from": "\u5177\u6709\u6cd5\u5b9a\u4ee3\u8868\u4eba\u6216\u4e3b\u8981\u8d1f\u8d23\u4eba\u7684\u57fa\u672c\u4fe1\u606f", "title": "contextual proximity", "to": "\u7b2c\u4e8c\u5341\u4e09\u6761", "width": 1.0}, {"from": "\u5177\u6709\u6cd5\u5b9a\u4ee3\u8868\u4eba\u6216\u4e3b\u8981\u8d1f\u8d23\u4eba\u7684\u57fa\u672c\u4fe1\u606f", "title": "\u662f,contextual proximity", "to": "\u7b2c\u4e8c\u5341\u4e8c\u6761", "width": 1.5}, {"from": "\u5927\u6c14\u6c61\u67d3\u7269\u3001\u6c34\u6c61\u67d3\u7269\u3001\u5de5\u4e1a\u56fa\u4f53\u5e9f\u7269\u3001\u5de5\u4e1a\u566a\u58f0\u7b49\u63a7\u5236\u6c61\u67d3\u7269\u6392\u653e\u7684\u8981\u6c42\uff0c\u91cd\u6c61\u67d3\u5929\u6c14\u7b49\u7279\u6b8a\u65f6\u6bb5\u7981\u6b62\u6216\u8005\u9650\u5236\u6c61\u67d3\u7269\u6392\u653e\u7684\u8981\u6c42\uff0c\u4ee5\u53ca\u571f\u58e4\u6c61\u67d3\u91cd\u70b9\u76d1\u7ba1\u5355\u4f4d\u7684\u63a7\u5236\u6709\u6bd2\u6709\u5bb3\u7269\u8d28\u6392\u653e\u3001\u571f\u58e4\u6c61\u67d3\u9690\u60a3\u6392\u67e5\u3001\u81ea\u884c\u76d1\u6d4b\u7b49\u8981\u6c42", "title": "\u5982\u679c\u8fd9\u4e9b\u4fe1\u606f\u9700\u8981\u5728\u6392\u6c7d\u8bb8\u53ef\u8bc1\u4e0a\u8bb0\u5f55\uff0c\u90a3\u4e48\u5b83\u4eec\u5e94\u8be5\u88ab\u8bb0\u5f55\u5728\u5176\u526f\u672c\u4e2d\u3002,contextual proximity", "to": "\u6392\u6c61\u5355\u4f4d", "width": 1.5}, {"from": "\u5927\u6c14\u6c61\u67d3\u7269\u3001\u6c34\u6c61\u67d3\u7269\u3001\u5de5\u4e1a\u56fa\u4f53\u5e9f\u7269\u3001\u5de5\u4e1a\u566a\u58f0\u7b49\u63a7\u5236\u6c61\u67d3\u7269\u6392\u653e\u7684\u8981\u6c42\uff0c\u91cd\u6c61\u67d3\u5929\u6c14\u7b49\u7279\u6b8a\u65f6\u6bb5\u7981\u6b62\u6216\u8005\u9650\u5236\u6c61\u67d3\u7269\u6392\u653e\u7684\u8981\u6c42\uff0c\u4ee5\u53ca\u571f\u58e4\u6c61\u67d3\u91cd\u70b9\u76d1\u7ba1\u5355\u4f4d\u7684\u63a7\u5236\u6709\u6bd2\u6709\u5bb3\u7269\u8d28\u6392\u653e\u3001\u571f\u58e4\u6c61\u67d3\u9690\u60a3\u6392\u67e5\u3001\u81ea\u884c\u76d1\u6d4b\u7b49\u8981\u6c42", "title": "contextual proximity", "to": "\u6392\u6c61\u8bb8\u53ef\u8bc1", "width": 0.5}, {"from": "\u5b9e\u9645\u6392\u6c61\u884c\u4e3a\u53d8\u5316\u4e4b\u524d\u91cd\u65b0\u7533\u8bf7\u53d6\u5f97\u6392\u6c7d\u8bb8\u53ef\u8bc1", "title": "\u662f,contextual proximity", "to": "\u7b2c\u4e8c\u5341\u4e09\u6761", "width": 2.0}, {"from": "\u5b9e\u9645\u6392\u6c61\u884c\u4e3a\u53d8\u5316\u4e4b\u524d\u91cd\u65b0\u7533\u8bf7\u53d6\u5f97\u6392\u6c7d\u8bb8\u53ef\u8bc1", "title": "contextual proximity", "to": "\u7b2c\u4e8c\u5341\u4e8c\u6761", "width": 0.5}, {"from": "\u6392\u6c61\u5355\u4f4d", "title": "contextual proximity", "to": "\u6392\u6c61\u767b\u8bb0\u5355\u4f4d\u540d\u79f0\u3001\u7edf\u4e00\u793e\u4f1a\u4fe1\u7528\u4ee3\u7801\u3001\u751f\u4ea7\u7ecf\u8425\u573a\u6240\u6240\u5728\u5730\u3001\u884c\u4e1a\u7c7b\u522b\u3001\u6cd5\u5b9a\u4ee3\u8868\u4eba\u6216\u8005\u5b9e\u9645\u8d1f\u8d23\u4eba\u7b49\u57fa\u672c\u4fe1\u606f", "width": 0.5}, {"from": "\u6392\u6c61\u5355\u4f4d", "title": "contextual proximity", "to": "\u6392\u6c61\u767b\u8bb0\u8868\u5185\u5bb9", "width": 0.5}, {"from": "\u6392\u6c61\u5355\u4f4d", "title": "contextual proximity", "to": "\u6392\u6c61\u8bb8\u53ef\u8bc1", "width": 1.0}, {"from": "\u6392\u6c61\u5355\u4f4d", "title": "contextual proximity", "to": "\u66f4\u52a0\u4e25\u683c\u7684\u6392\u653e\u9650\u503c", "width": 0.5}, {"from": "\u6392\u6c61\u767b\u8bb0\u5355\u4f4d\u540d\u79f0\u3001\u7edf\u4e00\u793e\u4f1a\u4fe1\u7528\u4ee3\u7801\u3001\u751f\u4ea7\u7ecf\u8425\u573a\u6240\u6240\u5728\u5730\u3001\u884c\u4e1a\u7c7b\u522b\u3001\u6cd5\u5b9a\u4ee3\u8868\u4eba\u6216\u8005\u5b9e\u9645\u8d1f\u8d23\u4eba\u7b49\u57fa\u672c\u4fe1\u606f", "title": "\u8fd9\u4e9b\u4fe1\u606f\u53ef\u4ee5\u4ece\u6392\u6c61\u767b\u8bb0\u5355\u4f4d\u4e2d\u83b7\u53d6\uff0c\u5e76\u9700\u8981\u5f55\u5165\u5230\u6392\u6c61\u8bb8\u53ef\u8bc1\u526f\u672c\u4e2d\u3002,contextual proximity", "to": "\u6392\u6c61\u8bb8\u53ef\u8bc1", "width": 1.5}, {"from": "\u6392\u6c61\u767b\u8bb0\u8868\u5185\u5bb9", "title": "\u5305\u542b\u76f8\u5e94\u7684\u4fe1\u606f\uff0c\u6392\u6c61\u5355\u4f4d\u53ef\u4ee5\u6839\u636e\u6cd5\u5f8b\u8981\u6c42\u5728\u5176\u526f\u672c\u4e2d\u8fdb\u884c\u5f55\u5165\u3002,contextual proximity", "to": "\u6392\u6c61\u8bb8\u53ef\u8bc1", "width": 1.5}, {"from": "\u6392\u6c61\u8bb8\u53ef\u8bc1", "title": "contextual proximity", "to": "\u66f4\u52a0\u4e25\u683c\u7684\u6392\u653e\u9650\u503c", "width": 0.5}, {"from": "\u6392\u6c7d\u8bb8\u53ef\u8bc1\u6709\u6548\u671f\u5c4a\u6ee1\u672a\u5ef6\u7eed", "title": "contextual proximity", "to": "\u7b2c\u4e8c\u5341\u4e09\u6761", "width": 1.0}, {"from": "\u6392\u6c7d\u8bb8\u53ef\u8bc1\u6709\u6548\u671f\u5c4a\u6ee1\u672a\u5ef6\u7eed", "title": "contextual proximity", "to": "\u7b2c\u4e8c\u5341\u4e8c\u6761", "width": 0.5}, {"from": "\u6392\u6c7d\u8bb8\u53ef\u8bc1\u6709\u6548\u671f\u5c4a\u6ee1\u672a\u5ef6\u7eed", "title": "\u662f", "to": "\u7b2c\u4e8c\u5341\u4e5d\u6761", "width": 1.0}, {"from": "\u6392\u6c7d\u8bb8\u53ef\u8bc1\u8bb0\u8f7d\u5185\u5bb9\u53d1\u751f\u53d8\u5316\uff0c\u53ef\u4ee5\u4e3b\u52a8\u5411\u5ba1\u6279\u90e8\u95e8\u63d0\u51fa\u8c03\u6574\u6392\u6c7d\u8bb8\u53ef\u8bc1\u5185\u5bb9\u7684\u7533\u8bf7", "title": "contextual proximity", "to": "\u7b2c\u4e8c\u5341\u4e09\u6761", "width": 1.0}, {"from": "\u6392\u6c7d\u8bb8\u53ef\u8bc1\u8bb0\u8f7d\u5185\u5bb9\u53d1\u751f\u53d8\u5316\uff0c\u53ef\u4ee5\u4e3b\u52a8\u5411\u5ba1\u6279\u90e8\u95e8\u63d0\u51fa\u8c03\u6574\u6392\u6c7d\u8bb8\u53ef\u8bc1\u5185\u5bb9\u7684\u7533\u8bf7", "title": "contextual proximity", "to": "\u7b2c\u4e8c\u5341\u4e8c\u6761", "width": 0.5}, {"from": "\u6392\u6c7d\u8bb8\u53ef\u8bc1\u8bb0\u8f7d\u5185\u5bb9\u53d1\u751f\u53d8\u5316\uff0c\u53ef\u4ee5\u4e3b\u52a8\u5411\u5ba1\u6279\u90e8\u95e8\u63d0\u51fa\u8c03\u6574\u6392\u6c7d\u8bb8\u53ef\u8bc1\u5185\u5bb9\u7684\u7533\u8bf7", "title": "\u662f", "to": "\u7b2c\u4e8c\u5341\u516b\u6761", "width": 1.0}, {"from": "\u63d0\u4ea4\u53d8\u66f4\u6392\u6c7d\u8bb8\u53ef\u8bc1\u7533\u8bf7\u8868\u548c\u4e0e\u53d8\u66f4\u6392\u6c7d\u8bb8\u53ef\u8bc1\u6709\u5173\u7684\u5176\u4ed6\u6750\u6599", "title": "\u662f,contextual proximity", "to": "\u7b2c\u4e8c\u5341\u4e09\u6761", "width": 2.0}, {"from": "\u63d0\u4ea4\u53d8\u66f4\u6392\u6c7d\u8bb8\u53ef\u8bc1\u7533\u8bf7\u8868\u548c\u4e0e\u53d8\u66f4\u6392\u6c7d\u8bb8\u53ef\u8bc1\u6709\u5173\u7684\u5176\u4ed6\u6750\u6599", "title": "contextual proximity", "to": "\u7b2c\u4e8c\u5341\u4e8c\u6761", "width": 0.5}, {"from": "\u76f8\u5173\u53d8\u66f4\u5185\u5bb9\u8f7d\u5165\u6392\u6c7d\u8bb8\u53ef\u8bc1\u526f\u672c\u4e2d\u7684\u53d8\u66f4\u548c\u5ef6\u7eed\u8bb0\u5f55", "title": "\u662f,contextual proximity", "to": "\u7b2c\u4e8c\u5341\u4e09\u6761", "width": 2.0}, {"from": "\u76f8\u5173\u53d8\u66f4\u5185\u5bb9\u8f7d\u5165\u6392\u6c7d\u8bb8\u53ef\u8bc1\u526f\u672c\u4e2d\u7684\u53d8\u66f4\u548c\u5ef6\u7eed\u8bb0\u5f55", "title": "contextual proximity", "to": "\u7b2c\u4e8c\u5341\u4e8c\u6761", "width": 0.5}, {"from": "\u7b2c\u4e09\u5341\u6761", "title": "contextual proximity", "to": "\u7b2c\u4e8c\u5341\u4e09\u6761", "width": 1.0}, {"from": "\u7b2c\u4e09\u5341\u6761", "title": "contextual proximity", "to": "\u7b2c\u4e8c\u5341\u4e8c\u6761", "width": 0.5}, {"from": "\u7b2c\u4e09\u5341\u6761", "title": "\u662f", "to": "\u8d85\u8d8a\u6cd5\u5b9a\u804c\u6743\u5ba1\u6279\u6392\u6c7d\u8bb8\u53ef\u8bc1\u6216\u8fdd\u53cd\u6cd5\u5b9a\u7a0b\u5e8f\u5ba1\u6279\u6392\u6c7d\u8bb8\u53ef\u8bc1", "width": 1.0}, {"from": "\u7b2c\u4e8c\u5341\u4e03\u6761", "title": "contextual proximity", "to": "\u7b2c\u4e8c\u5341\u4e09\u6761", "width": 1.0}, {"from": "\u7b2c\u4e8c\u5341\u4e03\u6761", "title": "contextual proximity", "to": "\u7b2c\u4e8c\u5341\u4e8c\u6761", "width": 0.5}, {"from": "\u7b2c\u4e8c\u5341\u4e03\u6761", "title": "\u662f", "to": "\u9002\u7528\u7684\u6c61\u67d3\u7269\u6392\u653e\u6807\u51c6\u6216\u91cd\u70b9\u6c61\u67d3\u7269\u6392\u653e\u603b\u91cf\u63a7\u5236\u8981\u6c42\u53d1\u751f\u53d8\u5316\uff0c\u9700\u8981\u5bf9\u6392\u6c7d\u8bb8\u53ef\u8bc1\u8fdb\u884c\u53d8\u66f4", "width": 1.0}, {"from": "\u7b2c\u4e8c\u5341\u4e09\u6761", "title": "contextual proximity", "to": "\u7b2c\u4e8c\u5341\u4e5d\u6761", "width": 1.0}, {"from": "\u7b2c\u4e8c\u5341\u4e09\u6761", "title": "contextual proximity", "to": "\u7b2c\u4e8c\u5341\u4e8c\u6761", "width": 2.0}, {"from": "\u7b2c\u4e8c\u5341\u4e09\u6761", "title": "contextual proximity", "to": "\u7b2c\u4e8c\u5341\u516b\u6761", "width": 1.0}, {"from": "\u7b2c\u4e8c\u5341\u4e09\u6761", "title": "contextual proximity", "to": "\u81ea\u53d7\u7406\u4e4b\u65e5\u8d77\u4e09\u5341\u65e5\u5185\uff0c\u5411\u5ba1\u6279\u90e8\u95e8\u63d0\u4ea4\u53d8\u66f4\u6392\u6c7d\u8bb8\u53ef\u8bc1\u7533\u8bf7\u8868\u4ee5\u53ca\u4e0e\u53d8\u66f4\u6392\u6c7d\u8bb8\u53ef\u8bc1\u6709\u5173\u7684\u5176\u4ed6\u6750\u6599", "width": 1.0}, {"from": "\u7b2c\u4e8c\u5341\u4e09\u6761", "title": "contextual proximity", "to": "\u8d85\u8d8a\u6cd5\u5b9a\u804c\u6743\u5ba1\u6279\u6392\u6c7d\u8bb8\u53ef\u8bc1\u6216\u8fdd\u53cd\u6cd5\u5b9a\u7a0b\u5e8f\u5ba1\u6279\u6392\u6c7d\u8bb8\u53ef\u8bc1", "width": 1.0}, {"from": "\u7b2c\u4e8c\u5341\u4e09\u6761", "title": "contextual proximity", "to": "\u9002\u7528\u7684\u6c61\u67d3\u7269\u6392\u653e\u6807\u51c6\u6216\u91cd\u70b9\u6c61\u67d3\u7269\u6392\u653e\u603b\u91cf\u63a7\u5236\u8981\u6c42\u53d1\u751f\u53d8\u5316\uff0c\u9700\u8981\u5bf9\u6392\u6c7d\u8bb8\u53ef\u8bc1\u8fdb\u884c\u53d8\u66f4", "width": 1.0}, {"from": "\u7b2c\u4e8c\u5341\u4e5d\u6761", "title": "contextual proximity", "to": "\u7b2c\u4e8c\u5341\u4e8c\u6761", "width": 0.5}, {"from": "\u7b2c\u4e8c\u5341\u4e8c\u6761", "title": "contextual proximity", "to": "\u7b2c\u4e8c\u5341\u516b\u6761", "width": 0.5}, {"from": "\u7b2c\u4e8c\u5341\u4e8c\u6761", "title": "contextual proximity", "to": "\u81ea\u53d7\u7406\u4e4b\u65e5\u8d77\u4e09\u5341\u65e5\u5185\uff0c\u5411\u5ba1\u6279\u90e8\u95e8\u63d0\u4ea4\u53d8\u66f4\u6392\u6c7d\u8bb8\u53ef\u8bc1\u7533\u8bf7\u8868\u4ee5\u53ca\u4e0e\u53d8\u66f4\u6392\u6c7d\u8bb8\u53ef\u8bc1\u6709\u5173\u7684\u5176\u4ed6\u6750\u6599", "width": 0.5}, {"from": "\u7b2c\u4e8c\u5341\u4e8c\u6761", "title": "contextual proximity", "to": "\u8d85\u8d8a\u6cd5\u5b9a\u804c\u6743\u5ba1\u6279\u6392\u6c7d\u8bb8\u53ef\u8bc1\u6216\u8fdd\u53cd\u6cd5\u5b9a\u7a0b\u5e8f\u5ba1\u6279\u6392\u6c7d\u8bb8\u53ef\u8bc1", "width": 0.5}, {"from": "\u7b2c\u4e8c\u5341\u4e8c\u6761", "title": "contextual proximity", "to": "\u9002\u7528\u7684\u6c61\u67d3\u7269\u6392\u653e\u6807\u51c6\u6216\u91cd\u70b9\u6c61\u67d3\u7269\u6392\u653e\u603b\u91cf\u63a7\u5236\u8981\u6c42\u53d1\u751f\u53d8\u5316\uff0c\u9700\u8981\u5bf9\u6392\u6c7d\u8bb8\u53ef\u8bc1\u8fdb\u884c\u53d8\u66f4", "width": 0.5}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": true,
+        "filter": [
+            "physics"
+        ]
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": true,
+        "forceAtlas2Based": {
+            "avoidOverlap": 0,
+            "centralGravity": 0.015,
+            "damping": 0.4,
+            "gravitationalConstant": -31,
+            "springConstant": 0.08,
+            "springLength": 100
+        },
+        "solver": "forceAtlas2Based",
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+                  // if this network requires displaying the configure window,
+                  // put it in its div
+                  options.configure["container"] = document.getElementById("config");
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+                    network.on("selectNode", neighbourhoodHighlight);
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>

@@ -1,0 +1,28 @@
+node_1|node_2|edge|chunk_id
+排污许可证|排污登记表内容|包含相应的信息，排污单位可以根据法律要求在其副本中进行录入。|1cc40acc7d6f4ad2b5091de8623b9c75
+排污许可证|排污登记单位名称、统一社会信用代码、生产经营场所所在地、行业类别、法定代表人或者实际负责人等基本信息|这些信息可以从排污登记单位中获取，并需要录入到排污许可证副本中。|1cc40acc7d6f4ad2b5091de8623b9c75
+排污单位|更加严格的排放限值|如果排污单位承诺执行更加严格的排放限值，那么这些信息应该被记录在其副本中。|1cc40acc7d6f4ad2b5091de8623b9c75
+排污单位|大气污染物、水污染物、工业固体废物、工业噪声等控制污染物排放的要求，重污染天气等特殊时段禁止或者限制污染物排放的要求，以及土壤污染重点监管单位的控制有毒有害物质排放、土壤污染隐患排查、自行监测等要求|如果这些信息需要在排汽许可证上记录，那么它们应该被记录在其副本中。|1cc40acc7d6f4ad2b5091de8623b9c75
+第二十二条|依法取得建设项目环境影响报告书（表）批准文件或者已经办理环境影响登记表备案手术|是|3b95826613604739bb6d2f4af8d5d389
+第二十二条|具有法定代表人或主要负责人的基本信息|是|3b95826613604739bb6d2f4af8d5d389
+第二十三条|实际排污行为变化之前重新申请取得排汽许可证|是|3b95826613604739bb6d2f4af8d5d389
+第二十三条|提交变更排汽许可证申请表和与变更排汽许可证有关的其他材料|是|3b95826613604739bb6d2f4af8d5d389
+第二十三条|自受理之日起三十日内，向审批部门提交变更排汽许可证申请表以及与变更排汽许可证有关的其他材料|是|3b95826613604739bb6d2f4af8d5d389
+第二十三条|相关变更内容载入排汽许可证副本中的变更和延续记录|是|3b95826613604739bb6d2f4af8d5d389
+第二十七条|适用的污染物排放标准或重点污染物排放总量控制要求发生变化，需要对排汽许可证进行变更|是|3b95826613604739bb6d2f4af8d5d389
+第二十八条|排汽许可证记载内容发生变化，可以主动向审批部门提出调整排汽许可证内容的申请|是|3b95826613604739bb6d2f4af8d5d389
+第二十九条|排汽许可证有效期届满未延续|是|3b95826613604739bb6d2f4af8d5d389
+第三十条|超越法定职权审批排汽许可证或违反法定程序审批排汽许可证|是|3b95826613604739bb6d2f4af8d5d389
+temporary cessation of environmental permits according to law|environmental permits that should be canceled or revoked according to the law|Legal cancellation or revocation|7b2c49b8b4f348528f993c989a61a509
+temporary cessation of environmental permits according to law|environmental permits that should be canceled or revoked due to exceeding the limit or abnormalities in pollution prevention facilities|Exceeding the limits or abnormalities in pollution prevention facilities|7b2c49b8b4f348528f993c989a61a509
+temporary cessation of environmental permits according to law|environmental permits that should be canceled or revoked due to changes in production and business activities|Changes in production and business activities|7b2c49b8b4f348528f993c989a61a509
+implementation of environmental permit priority management|pollution monitoring automatic measurement devices installed, operated, and maintained in accordance with the law|Environmental permit priority management|7b2c49b8b4f348528f993c989a61a509
+environmental permit priority management|communication of pollution monitoring automatic measurement devices with environmental management departments|Communication with environmental management departments|7b2c49b8b4f348528f993c989a61a509
+environmental permit priority management|reporting and rectifying abnormalities in pollution monitoring automatic measurement devices in a timely manner|Reporting and rectification of abnormalities|7b2c49b8b4f348528f993c989a61a509
+records related to environmental management|details of major production facilities operating in accordance with environmental pollution control requirements|Environmental management records|7b2c49b8b4f348528f993c989a61a509
+records related to environmental management|details of pollution prevention facilities operating and managing information|Environmental management records|7b2c49b8b4f348528f993c989a61a509
+records related to environmental management|detailed records of actual pollution emissions and volumes in accordance with relevant technical standards|Environmental management records|7b2c49b8b4f348528f993c989a61a509
+records related to environmental management|details of other information required by related technical standards for recording|Environmental management records|7b2c49b8b4f348528f993c989a61a509
+yearly, quarterly, and monthly reports on the implementation of environmental permits|annual, quarterly, or monthly reports on environmental permit implementation should be submitted to the national environmental permit management information platform in accordance with the law|Implementation of environmental permits|7b2c49b8b4f348528f993c989a61a509
+yearly, quarterly, and monthly reports on the implementation of environmental permits|quarterly or monthly reports can replace annual reports in some cases and should include basic production information, pollution prevention facility operating status, self-monitoring execution status, records management status, disclosure situation, internal environmental management system construction and operation status, and other environmental permit requirements for execution|Implementation of environmental permits|7b2c49b8b4f348528f993c989a61a509
+yearly, quarterly, and monthly reports on the implementation of environmental permits|environmental permit implementation reports should be used as important references for post-project environmental impact assessment|Implementation of environmental permits|7b2c49b8b4f348528f993c989a61a509
